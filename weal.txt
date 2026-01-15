@@ -1,63 +1,57 @@
 -- [[ 1. CONFIGURATION ]]
 local folderName = "MozzyWare Key System"
 local fileName = "key.txt"
-local TealColor = Color3.fromRGB(0, 122, 122)
+local TealColor = Color3.fromRGB(0, 170, 170)
 local discordLink = "https://discord.gg/pFHXu3tQ"
 local webhook = "https://discord.com/api/webhooks/1441600690764906667/fUOXIcdM14Kjhbzf_yNQfg7bD1BdQSMuC1Cckl8Y4pstdJBAwpPzfm6htxt8IbUml542"
 
 local keyHWIDPairs = {
     ["123"] = "6EFE7DB2-04E4-4323-9D35-34AB62617C56",
+    ["321"] = "6EFE7DB2-04E4-4323-9D35-34AB62617C56",
 }
 
 local typingPhrases = {
     "The #1 Undetected Script",
     "Fastest Execution Speed",
     "Premium HWID Security",
-    "Constant Daily Updates",
     "Built for the Best"
+}
+
+-- NEW: Update Log Content
+local updates = {
+    "[+] Added Static Update Log",
+    "[+] Fixed Clipping Issues",
+    "[+] Optimized UI Performance",
+    "[+] Improved HWID Check",
+    "[-] Removed Glitchy Animations"
 }
 
 -- [[ 2. SERVICES ]]
 local player = game:GetService("Players").LocalPlayer
 local HttpService = game:GetService("HttpService")
-local MarketPlace = game:GetService("MarketplaceService")
 local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
 local hwid = game:GetService("RbxAnalyticsService"):GetClientId()
 
--- [[ 3. UNIVERSAL WEBHOOK FUNCTION ]]
-local function sendToDiscord(status, inputKey)
-    if webhook == "" then return end
-    
-    local executor = identifyexecutor and identifyexecutor() or "Unknown"
-    local gameName = MarketPlace:GetProductInfo(game.PlaceId).Name
-    
-    -- Color coding: Green for Success, Orange for HWID fail, Red for Invalid Key
-    local embedColor = 16711680 -- Default Red
-    if status == "Success" then 
-        embedColor = 31488 -- Green
-    elseif status == "Failed (HWID Mismatch)" then
-        embedColor = 16753920 -- Orange
-    end
-
-    local data = {
-        ["embeds"] = {{
-            ["title"] = "MozzyWare Log",
-            ["description"] = "**Status:** " .. status,
-            ["color"] = embedColor,
-            ["fields"] = {
-                {["name"] = "User", ["value"] = player.Name .. " ("..player.UserId..")", ["inline"] = true},
-                {["name"] = "Key Used", ["value"] = "```" .. inputKey .. "```", ["inline"] = true},
-                {["name"] = "Executor", ["value"] = "```" .. executor .. "```", ["inline"] = true},
-                {["name"] = "Game", ["value"] = "["..gameName.."](https://www.roblox.com/games/"..game.PlaceId..")", ["inline"] = false},
-                {["name"] = "HWID", ["value"] = "```" .. hwid .. "```", ["inline"] = false},
-            },
-            ["footer"] = {["text"] = "MozzyWare Logger • " .. os.date("%X")}
-        }}
-    }
-
-    local requestFunc = syn and syn.request or http_request or request or (http and http.request)
+-- [[ WEBHOOK SUPPORT FUNCTION ]]
+local function SendWebhookLog(keyEntered, status)
+    local requestFunc = syn and syn.request or http_request or request or http.request
     if requestFunc then
+        local data = {
+            ["embeds"] = {{
+                ["title"] = "MozzyWare Key Logs",
+                ["color"] = 43775,
+                ["fields"] = {
+                    {["name"] = "Player", ["value"] = player.Name, ["inline"] = true},
+                    {["name"] = "Status", ["value"] = status, ["inline"] = true},
+                    {["name"] = "Key Used", ["value"] = "||"..keyEntered.."||", ["inline"] = false},
+                    {["name"] = "HWID", ["value"] = "```"..hwid.."```", ["inline"] = false}
+                },
+                ["footer"] = {["text"] = "MozzyWare Logger • " .. os.date("%X")}
+            }}
+        }
         pcall(function()
             requestFunc({
                 Url = webhook,
@@ -69,154 +63,223 @@ local function sendToDiscord(status, inputKey)
     end
 end
 
--- [[ 4. UI SETUP ]]
+-- [[ 3. UI CONSTRUCTION ]]
 local ScreenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 24)
-MainFrame.BackgroundTransparency = 1 
-MainFrame.Size = UDim2.new(0, 357, 0, 240)
-MainFrame.Position = UDim2.new(0.5, -178, 0.65, -120) 
-MainFrame.BorderSizePixel = 0
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
+ScreenGui.Name = "MozzyWareUI"
 
--- Draggable Logic
+-- BACKGROUND BLUR
+local Blur = Instance.new("BlurEffect", Lighting)
+Blur.Size = 0
+TweenService:Create(Blur, TweenInfo.new(1), {Size = 20}):Play()
+
+-- INITIAL LOADING SCREEN
+local LoadFrame = Instance.new("Frame", ScreenGui)
+LoadFrame.Size = UDim2.new(0, 220, 0, 60)
+LoadFrame.Position = UDim2.new(0.5, -110, 0.5, -30)
+LoadFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 17)
+LoadFrame.BorderSizePixel = 0
+Instance.new("UICorner", LoadFrame)
+local UIStrokeLoad = Instance.new("UIStroke", LoadFrame)
+UIStrokeLoad.Color = TealColor
+UIStrokeLoad.Thickness = 1.5
+
+local LoadLabel = Instance.new("TextLabel", LoadFrame)
+LoadLabel.Size = UDim2.new(1, 0, 1, 0)
+LoadLabel.BackgroundTransparency = 1
+LoadLabel.Text = "Loading MozzyWare..."
+LoadLabel.TextColor3 = Color3.new(1,1,1)
+LoadLabel.Font = Enum.Font.GothamBold
+LoadLabel.TextSize = 14
+
+task.wait(1.5)
+LoadFrame:Destroy()
+
+-- MAIN INTERFACE
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 17) 
+MainFrame.BackgroundTransparency = 1 
+MainFrame.Size = UDim2.new(0, 357, 0, 340)
+MainFrame.Position = UDim2.new(0.5, -178, 0.65, -170) 
+MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true 
+Instance.new("UICorner", MainFrame)
+
+local UIStroke = Instance.new("UIStroke", MainFrame)
+UIStroke.Color = TealColor
+UIStroke.Thickness = 1.5
+UIStroke.Transparency = 0.5
+
+-- [[ ADDED: UPDATE LOG (LOCKED TO SIDE) ]]
+local LogFrame = Instance.new("Frame", ScreenGui)
+LogFrame.Size = UDim2.new(0, 160, 0, 340)
+LogFrame.Position = UDim2.new(0.5, 185, 0.5, -170) -- Fixed to right of Main
+LogFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 14)
+LogFrame.BorderSizePixel = 0
+LogFrame.Visible = false -- Hidden until intro finishes
+Instance.new("UICorner", LogFrame)
+
+local LogStroke = Instance.new("UIStroke", LogFrame)
+LogStroke.Color = TealColor; LogStroke.Thickness = 1; LogStroke.Transparency = 0.6
+
+local LogTitle = Instance.new("TextLabel", LogFrame)
+LogTitle.Text = "UPDATE LOG"; LogTitle.Size = UDim2.new(1, 0, 0, 40)
+LogTitle.TextColor3 = TealColor; LogTitle.BackgroundTransparency = 1
+LogTitle.Font = Enum.Font.GothamBold; LogTitle.TextSize = 13
+
+local LogScroll = Instance.new("ScrollingFrame", LogFrame)
+LogScroll.Size = UDim2.new(1, -10, 1, -50); LogScroll.Position = UDim2.new(0, 5, 0, 45)
+LogScroll.BackgroundTransparency = 1; LogScroll.BorderSizePixel = 0; LogScroll.ScrollBarThickness = 2
+LogScroll.CanvasSize = UDim2.new(0, 0, 0, #updates * 25)
+local LogList = Instance.new("UIListLayout", LogScroll); LogList.Padding = UDim.new(0, 5)
+
+for _, msg in pairs(updates) do
+    local l = Instance.new("TextLabel", LogScroll)
+    l.Size = UDim2.new(1, 0, 0, 20); l.BackgroundTransparency = 1; l.Text = " " .. msg
+    l.TextColor3 = Color3.fromRGB(200, 200, 200); l.Font = Enum.Font.Code; l.TextSize = 10; l.TextXAlignment = Enum.TextXAlignment.Left
+end
+
+-- SHAKE FUNCTION
+local function ShakeUI(frame)
+    local origPos = frame.Position
+    for i = 1, 5 do
+        TweenService:Create(frame, TweenInfo.new(0.05), {Position = origPos + UDim2.new(0, math.random(-6, 6), 0, 0)}):Play()
+        task.wait(0.05)
+    end
+    frame.Position = origPos
+end
+
+-- VAPE PARTICLES SYSTEM
+task.spawn(function()
+    while true do
+        task.wait(0.3)
+        local p = Instance.new("Frame", MainFrame)
+        p.Size = UDim2.new(0, math.random(6, 8), 0, math.random(1, 3))
+        p.Position = UDim2.new(math.random(), 0, 1, 5)
+        p.BackgroundColor3 = TealColor
+        p.BackgroundTransparency = 0.5
+        p.BorderSizePixel = 0
+        p.ZIndex = 1
+        Instance.new("UICorner", p).CornerRadius = UDim.new(1, 0)
+        
+        local tween = TweenService:Create(p, TweenInfo.new(math.random(4, 7), Enum.EasingStyle.Linear), {
+            Position = UDim2.new(p.Position.X.Scale, math.random(-20, 20), -0.1, 0),
+            BackgroundTransparency = 1,
+            Rotation = math.random(-180, 180)
+        })
+        tween:Play()
+        tween.Completed:Connect(function() p:Destroy() end)
+    end
+end)
+
+-- Draggable Logic (Synced)
 local dragging, dragInput, dragStart, startPos
 MainFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true dragStart = input.Position startPos = MainFrame.Position
-        input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
     end
 end)
-MainFrame.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end end)
 UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        local newPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        MainFrame.Position = newPos
+        LogFrame.Position = newPos + UDim2.new(0, 363, 0, 0) -- Keeps Log locked to side while dragging
     end
 end)
+MainFrame.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end end)
+UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+
+local function AddSquish(btn)
+    btn.MouseButton1Down:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(btn.Size.X.Scale, btn.Size.X.Offset - 6, btn.Size.Y.Scale, btn.Size.Y.Offset - 6)}):Play()
+    end)
+    btn.MouseButton1Up:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(btn.Size.X.Scale, btn.Size.X.Offset + 6, btn.Size.Y.Scale, btn.Size.Y.Offset + 6)}):Play()
+    end)
+end
 
 local TopLine = Instance.new("Frame", MainFrame)
-TopLine.Size = UDim2.new(1, 0, 0, 3)
-TopLine.BackgroundColor3 = TealColor
-TopLine.BorderSizePixel = 0
-
-local Title = Instance.new("TextLabel", MainFrame)
-Title.Text = "MozzyWare Key System"
-Title.Size = UDim2.new(1, 0, 0, 35)
-Title.Position = UDim2.new(0, 0, 0, 8)
-Title.TextColor3 = TealColor
-Title.BackgroundTransparency = 1
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 18
+TopLine.Size = UDim2.new(1, 0, 0, 3); TopLine.BackgroundColor3 = TealColor; TopLine.BorderSizePixel = 0; TopLine.ZIndex = 10
 
 local CloseBtn = Instance.new("TextButton", MainFrame)
-CloseBtn.Text = "X"
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -35, 0, 5)
-CloseBtn.BackgroundTransparency = 1
-CloseBtn.TextColor3 = TealColor
-CloseBtn.TextSize = 16
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+CloseBtn.Size = UDim2.new(0, 30, 0, 30); CloseBtn.Position = UDim2.new(1, -35, 0, 5)
+CloseBtn.BackgroundTransparency = 1; CloseBtn.Text = "X"; CloseBtn.TextColor3 = Color3.fromRGB(0, 122, 122)
+CloseBtn.TextSize = 18; CloseBtn.Font = Enum.Font.GothamBold; CloseBtn.ZIndex = 10
+CloseBtn.MouseButton1Click:Connect(function() 
+    TweenService:Create(Blur, TweenInfo.new(0.5), {Size = 0}):Play()
+    task.wait(0.5)
+    ScreenGui:Destroy() 
+end)
+
+local PFP = Instance.new("ImageLabel", MainFrame)
+PFP.Size = UDim2.new(0, 50, 0, 50); PFP.Position = UDim2.new(0, 15, 0, 15)
+PFP.BackgroundColor3 = Color3.fromRGB(30, 30, 32); PFP.Image = game:GetService("Players"):GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+PFP.ZIndex = 10; Instance.new("UICorner", PFP).CornerRadius = UDim.new(1, 0)
+
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Text = "MOZZYWARE"; Title.Size = UDim2.new(1, -75, 0, 25); Title.Position = UDim2.new(0, 75, 0, 12)
+Title.TextColor3 = Color3.new(0, 122, 122); Title.BackgroundTransparency = 1; Title.Font = Enum.Font.GothamBold; Title.TextSize = 18; Title.TextXAlignment = Enum.TextXAlignment.Left; Title.ZIndex = 10
+
+local HelloLabel = Instance.new("TextLabel", MainFrame)
+HelloLabel.Text = "Hello, " .. player.DisplayName; HelloLabel.Size = UDim2.new(1, -75, 0, 15); HelloLabel.Position = UDim2.new(0, 75, 0, 34)
+HelloLabel.TextColor3 = Color3.fromRGB(180, 180, 180); HelloLabel.BackgroundTransparency = 1; HelloLabel.Font = Enum.Font.GothamMedium; HelloLabel.TextSize = 13; HelloLabel.TextXAlignment = Enum.TextXAlignment.Left; HelloLabel.ZIndex = 10
 
 local SubTitle = Instance.new("TextLabel", MainFrame)
-SubTitle.Size = UDim2.new(1, 0, 0, 20)
-SubTitle.Position = UDim2.new(0, 0, 0, 40)
-SubTitle.TextColor3 = TealColor
-SubTitle.BackgroundTransparency = 1
-SubTitle.Font = Enum.Font.Code
-SubTitle.TextSize = 14
-SubTitle.Text = ""
+SubTitle.Size = UDim2.new(1, -75, 0, 15); SubTitle.Position = UDim2.new(0, 75, 0, 50)
+SubTitle.TextColor3 = TealColor; SubTitle.BackgroundTransparency = 1; SubTitle.Font = Enum.Font.Code; SubTitle.ZIndex = 10
+SubTitle.TextSize = 12; SubTitle.TextXAlignment = Enum.TextXAlignment.Left; SubTitle.Text = ""
 
--- Typewriter Thread
 task.spawn(function()
     while task.wait() do
-        for _, phrase in pairs(typingPhrases) do
-            for i = 1, #phrase do
-                SubTitle.Text = string.sub(phrase, 1, i)
-                task.wait(0.05)
-            end
+        for _, p in pairs(typingPhrases) do
+            for i = 1, #p do SubTitle.Text = string.sub(p, 1, i) task.wait(0.05) end
             task.wait(2)
-            for i = #phrase, 0, -1 do
-                SubTitle.Text = string.sub(phrase, 1, i)
-                task.wait(0.02)
-            end
-            task.wait(0.5)
+            for i = #p, 0, -1 do SubTitle.Text = string.sub(p, 1, i) task.wait(0.02) end
         end
     end
 end)
 
+local PerfLabel = Instance.new("TextLabel", MainFrame)
+PerfLabel.Size = UDim2.new(1, 0, 0, 20); PerfLabel.Position = UDim2.new(0, 0, 1, -25)
+PerfLabel.TextColor3 = Color3.fromRGB(100, 100, 100); PerfLabel.BackgroundTransparency = 1; PerfLabel.Font = Enum.Font.Code; PerfLabel.TextSize = 11; PerfLabel.ZIndex = 10
+
+task.spawn(function()
+    while task.wait(0.5) do
+        local fps = math.floor(1/RunService.RenderStepped:Wait())
+        local ping = tonumber(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString():match("%d+"))
+        PerfLabel.Text = "FPS: " .. fps .. " | PING: " .. ping .. "ms"
+    end
+end)
+
 local TextBox = Instance.new("TextBox", MainFrame)
-TextBox.Size = UDim2.new(0, 300, 0, 35)
-TextBox.Position = UDim2.new(0.5, -150, 0.4, 0)
-TextBox.BackgroundColor3 = Color3.fromRGB(30, 30, 32)
-TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextBox.PlaceholderText = "Enter Key..."
-TextBox.Text = (readfile and isfile("MozzyWareKeySystem/key.txt") and readfile("MozzyWareKeySystem/key.txt")) or ""
-TextBox.BorderSizePixel = 0
-Instance.new("UICorner", TextBox)
+TextBox.Size = UDim2.new(0, 300, 0, 35); TextBox.Position = UDim2.new(0.5, -150, 0.45, 0); TextBox.BackgroundColor3 = Color3.fromRGB(30, 30, 32); TextBox.TextColor3 = Color3.new(1,1,1); TextBox.PlaceholderText = "Enter Key..."; TextBox.BorderSizePixel = 0; TextBox.ZIndex = 10; Instance.new("UICorner", TextBox)
 
 local CheckBtn = Instance.new("TextButton", MainFrame)
-CheckBtn.Size = UDim2.new(0, 145, 0, 35)
-CheckBtn.Position = UDim2.new(0.5, 5, 0.6, 5) 
-CheckBtn.BackgroundColor3 = TealColor
-CheckBtn.Text = "Check Key"
-CheckBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CheckBtn.Font = Enum.Font.GothamBold
-Instance.new("UICorner", CheckBtn)
+CheckBtn.Size = UDim2.new(0, 145, 0, 35); CheckBtn.Position = UDim2.new(0.5, 5, 0.62, 5); CheckBtn.BackgroundColor3 = Color3.fromRGB(0, 122, 122); CheckBtn.Text = "Verify Access"; CheckBtn.TextColor3 = Color3.new(1,1,1); CheckBtn.Font = Enum.Font.GothamBold; CheckBtn.ZIndex = 10; Instance.new("UICorner", CheckBtn)
+AddSquish(CheckBtn)
 
 local CopyBtn = Instance.new("TextButton", MainFrame)
-CopyBtn.Size = UDim2.new(0, 145, 0, 35)
-CopyBtn.Position = UDim2.new(0.5, -150, 0.6, 5)
-CopyBtn.BackgroundColor3 = Color3.fromRGB(0, 122, 122)
-CopyBtn.Text = "Get Key Here"
-CopyBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-Instance.new("UICorner", CopyBtn)
+CopyBtn.Size = UDim2.new(0, 145, 0, 35); CopyBtn.Position = UDim2.new(0.5, -150, 0.62, 5); CopyBtn.BackgroundColor3 = Color3.fromRGB(0, 122, 122); CopyBtn.Text = "Get Key"; CopyBtn.TextColor3 = Color3.new(0.8,0.8,0.8); CopyBtn.ZIndex = 10; Instance.new("UICorner", CopyBtn)
+AddSquish(CopyBtn)
 
 local HwidCopyBtn = Instance.new("TextButton", MainFrame)
-HwidCopyBtn.Size = UDim2.new(0, 300, 0, 30)
-HwidCopyBtn.Position = UDim2.new(0.5, -150, 0.82, 0)
-HwidCopyBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 37)
-HwidCopyBtn.BackgroundTransparency = 0.4
-HwidCopyBtn.Text = "Copy My HWID"
-HwidCopyBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
-Instance.new("UICorner", HwidCopyBtn)
+HwidCopyBtn.Size = UDim2.new(0, 300, 0, 30); HwidCopyBtn.Position = UDim2.new(0.5, -150, 0.8, 0); HwidCopyBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 37); HwidCopyBtn.Text = "Copy HWID"; HwidCopyBtn.TextColor3 = Color3.new(0.6,0.6,0.6); HwidCopyBtn.ZIndex = 10; Instance.new("UICorner", HwidCopyBtn)
+AddSquish(HwidCopyBtn)
 
--- Intro Animation
-TweenService:Create(MainFrame, TweenInfo.new(0.8), {BackgroundTransparency = 0.15, Position = UDim2.new(0.5, -178, 0.5, -120)}):Play()
-
--- Logic
-CopyBtn.MouseButton1Click:Connect(function()
-    setclipboard(discordLink)
-    CopyBtn.Text = "Copied!"
-    task.wait(1)
-    CopyBtn.Text = "Get Key Here"
-end)
-
-HwidCopyBtn.MouseButton1Click:Connect(function()
-    setclipboard(hwid)
-    HwidCopyBtn.Text = "Copied!"
-    task.wait(2)
-    HwidCopyBtn.Text = "Copy My HWID"
-end)
-
+-- [[ VERIFICATION LOGIC ]]
 CheckBtn.MouseButton1Click:Connect(function()
     local input = TextBox.Text
-    
-    if keyHWIDPairs[input] then
-        if keyHWIDPairs[input] == hwid then
-            -- EVERYTHING MATCHES
-            if writefile then 
-                pcall(function() 
-                    if not isfolder("MozzyWareKeySystem") then makefolder("MozzyWareKeySystem") end 
-                    writefile("MozzyWareKeySystem/key.txt", input) 
-                end) 
-            end
-            sendToDiscord("Success", input)
-            CheckBtn.Text = "Success!"
-            task.wait(0.5)
-            ScreenGui:Destroy()
-            local ScreenGui = Instance.new("ScreenGui")
+    if keyHWIDPairs[input] == hwid then
+        CheckBtn.Text = "Success!"
+        task.spawn(function() SendWebhookLog(input, "✅ Verified Access") end)
+        
+        TweenService:Create(Blur, TweenInfo.new(0.5), {Size = 0}):Play()
+        TweenService:Create(MainFrame, TweenInfo.new(0.5), {BackgroundTransparency = 1, Position = UDim2.new(0.5, -178, 0.7, -170)}):Play()
+        LogFrame:Destroy() -- Removes Log on Success
+        task.wait(0.5)
+        ScreenGui:Destroy()
+        print("MozzyWare Verified! Enjoy your script.")
+        local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "SummonLoader"
 ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
@@ -16536,22 +16599,21 @@ task.delay(5, function()
         screenGui:Destroy()
     end
 end)
-        else
-            -- KEY IS RIGHT, HWID IS WRONG
-            sendToDiscord("Failed (HWID Mismatch)", input)
-            CheckBtn.Text = "Wrong HWID!"
-            CheckBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0) -- Orange
-            task.wait(2)
-            CheckBtn.Text = "Check Key"
-            CheckBtn.BackgroundColor3 = TealColor
-        end
-    else
-        -- KEY DOESNT EXIST
-        sendToDiscord("Failed (Invalid Key)", input)
-        CheckBtn.Text = "Invalid Key!"
-        CheckBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0) -- Red
+    else 
+        CheckBtn.Text = "Invalid!"
+        ShakeUI(MainFrame)
+        task.spawn(function() SendWebhookLog(input, "❌ Failed Attempt") end)
+        CheckBtn.BackgroundColor3 = Color3.fromRGB(150, 0 ,0)
         task.wait(2)
-        CheckBtn.Text = "Check Key"
+        CheckBtn.Text = "Verify Access"
         CheckBtn.BackgroundColor3 = TealColor
     end
 end)
+
+CopyBtn.MouseButton1Click:Connect(function() setclipboard(discordLink); CopyBtn.Text = "Link Copied!" task.wait(2) CopyBtn.Text = "Get Key" end)
+HwidCopyBtn.MouseButton1Click:Connect(function() setclipboard(hwid); HwidCopyBtn.Text = "HWID Copied!" task.wait(2) HwidCopyBtn.Text = "Copy HWID" end)
+
+-- Intro Animation
+TweenService:Create(MainFrame, TweenInfo.new(0.8, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {BackgroundTransparency = 0.15, Position = UDim2.new(0.5, -178, 0.5, -170)}):Play()
+task.wait(0.8)
+LogFrame.Visible = true -- Shows the log once the main UI is in place
