@@ -7,7 +7,7 @@ local webhook = "https://discord.com/api/webhooks/1441600690764906667/fUOXIcdM14
 
 local keyHWIDPairs = {
     ["123"] = "6EFE7DB2-04E4-4323-9D35-34AB62617C56",
-    ["321"] = "6EFE7DB2-04E4-4323-9D35-34AB62617C56",
+    ["321"] = "0FB1D5CF-31C6-4714-8F02-7265E27BA870",
 }
 
 local typingPhrases = {
