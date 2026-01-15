@@ -1,4 +1,222 @@
-local ScreenGui = Instance.new("ScreenGui")
+-- [[ 1. CONFIGURATION ]]
+local folderName = "MozzyWare Key System"
+local fileName = "key.txt"
+local TealColor = Color3.fromRGB(0, 122, 122)
+local discordLink = "https://discord.gg/pFHXu3tQ"
+local webhook = "https://discord.com/api/webhooks/1441600690764906667/fUOXIcdM14Kjhbzf_yNQfg7bD1BdQSMuC1Cckl8Y4pstdJBAwpPzfm6htxt8IbUml542"
+
+local keyHWIDPairs = {
+    ["123"] = "6EFE7DB2-04E4-4323-9D35-34AB62617C56",
+}
+
+local typingPhrases = {
+    "The #1 Undetected Script",
+    "Fastest Execution Speed",
+    "Premium HWID Security",
+    "Constant Daily Updates",
+    "Built for the Best"
+}
+
+-- [[ 2. SERVICES ]]
+local player = game:GetService("Players").LocalPlayer
+local HttpService = game:GetService("HttpService")
+local MarketPlace = game:GetService("MarketplaceService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local hwid = game:GetService("RbxAnalyticsService"):GetClientId()
+
+-- [[ 3. UNIVERSAL WEBHOOK FUNCTION ]]
+local function sendToDiscord(status, inputKey)
+    if webhook == "" then return end
+    
+    local executor = identifyexecutor and identifyexecutor() or "Unknown"
+    local gameName = MarketPlace:GetProductInfo(game.PlaceId).Name
+    
+    -- Color coding: Green for Success, Orange for HWID fail, Red for Invalid Key
+    local embedColor = 16711680 -- Default Red
+    if status == "Success" then 
+        embedColor = 31488 -- Green
+    elseif status == "Failed (HWID Mismatch)" then
+        embedColor = 16753920 -- Orange
+    end
+
+    local data = {
+        ["embeds"] = {{
+            ["title"] = "MozzyWare Log",
+            ["description"] = "**Status:** " .. status,
+            ["color"] = embedColor,
+            ["fields"] = {
+                {["name"] = "User", ["value"] = player.Name .. " ("..player.UserId..")", ["inline"] = true},
+                {["name"] = "Key Used", ["value"] = "```" .. inputKey .. "```", ["inline"] = true},
+                {["name"] = "Executor", ["value"] = "```" .. executor .. "```", ["inline"] = true},
+                {["name"] = "Game", ["value"] = "["..gameName.."](https://www.roblox.com/games/"..game.PlaceId..")", ["inline"] = false},
+                {["name"] = "HWID", ["value"] = "```" .. hwid .. "```", ["inline"] = false},
+            },
+            ["footer"] = {["text"] = "MozzyWare Logger • " .. os.date("%X")}
+        }}
+    }
+
+    local requestFunc = syn and syn.request or http_request or request or (http and http.request)
+    if requestFunc then
+        pcall(function()
+            requestFunc({
+                Url = webhook,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode(data)
+            })
+        end)
+    end
+end
+
+-- [[ 4. UI SETUP ]]
+local ScreenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 24)
+MainFrame.BackgroundTransparency = 1 
+MainFrame.Size = UDim2.new(0, 357, 0, 240)
+MainFrame.Position = UDim2.new(0.5, -178, 0.65, -120) 
+MainFrame.BorderSizePixel = 0
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
+
+-- Draggable Logic
+local dragging, dragInput, dragStart, startPos
+MainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true dragStart = input.Position startPos = MainFrame.Position
+        input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
+    end
+end)
+MainFrame.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end end)
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+local TopLine = Instance.new("Frame", MainFrame)
+TopLine.Size = UDim2.new(1, 0, 0, 3)
+TopLine.BackgroundColor3 = TealColor
+TopLine.BorderSizePixel = 0
+
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Text = "MozzyWare Key System"
+Title.Size = UDim2.new(1, 0, 0, 35)
+Title.Position = UDim2.new(0, 0, 0, 8)
+Title.TextColor3 = TealColor
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+
+local CloseBtn = Instance.new("TextButton", MainFrame)
+CloseBtn.Text = "X"
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -35, 0, 5)
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.TextColor3 = TealColor
+CloseBtn.TextSize = 16
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+
+local SubTitle = Instance.new("TextLabel", MainFrame)
+SubTitle.Size = UDim2.new(1, 0, 0, 20)
+SubTitle.Position = UDim2.new(0, 0, 0, 40)
+SubTitle.TextColor3 = TealColor
+SubTitle.BackgroundTransparency = 1
+SubTitle.Font = Enum.Font.Code
+SubTitle.TextSize = 14
+SubTitle.Text = ""
+
+-- Typewriter Thread
+task.spawn(function()
+    while task.wait() do
+        for _, phrase in pairs(typingPhrases) do
+            for i = 1, #phrase do
+                SubTitle.Text = string.sub(phrase, 1, i)
+                task.wait(0.05)
+            end
+            task.wait(2)
+            for i = #phrase, 0, -1 do
+                SubTitle.Text = string.sub(phrase, 1, i)
+                task.wait(0.02)
+            end
+            task.wait(0.5)
+        end
+    end
+end)
+
+local TextBox = Instance.new("TextBox", MainFrame)
+TextBox.Size = UDim2.new(0, 300, 0, 35)
+TextBox.Position = UDim2.new(0.5, -150, 0.4, 0)
+TextBox.BackgroundColor3 = Color3.fromRGB(30, 30, 32)
+TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextBox.PlaceholderText = "Enter Key..."
+TextBox.Text = (readfile and isfile("MozzyWareKeySystem/key.txt") and readfile("MozzyWareKeySystem/key.txt")) or ""
+TextBox.BorderSizePixel = 0
+Instance.new("UICorner", TextBox)
+
+local CheckBtn = Instance.new("TextButton", MainFrame)
+CheckBtn.Size = UDim2.new(0, 145, 0, 35)
+CheckBtn.Position = UDim2.new(0.5, 5, 0.6, 5) 
+CheckBtn.BackgroundColor3 = TealColor
+CheckBtn.Text = "Check Key"
+CheckBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CheckBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", CheckBtn)
+
+local CopyBtn = Instance.new("TextButton", MainFrame)
+CopyBtn.Size = UDim2.new(0, 145, 0, 35)
+CopyBtn.Position = UDim2.new(0.5, -150, 0.6, 5)
+CopyBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 47)
+CopyBtn.Text = "Get Key Here"
+CopyBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+Instance.new("UICorner", CopyBtn)
+
+local HwidCopyBtn = Instance.new("TextButton", MainFrame)
+HwidCopyBtn.Size = UDim2.new(0, 300, 0, 30)
+HwidCopyBtn.Position = UDim2.new(0.5, -150, 0.82, 0)
+HwidCopyBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 37)
+HwidCopyBtn.BackgroundTransparency = 0.4
+HwidCopyBtn.Text = "Copy My HWID"
+HwidCopyBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
+Instance.new("UICorner", HwidCopyBtn)
+
+-- Intro Animation
+TweenService:Create(MainFrame, TweenInfo.new(0.8), {BackgroundTransparency = 0.15, Position = UDim2.new(0.5, -178, 0.5, -120)}):Play()
+
+-- Logic
+CopyBtn.MouseButton1Click:Connect(function()
+    setclipboard(discordLink)
+    CopyBtn.Text = "Copied!"
+    task.wait(1)
+    CopyBtn.Text = "Get Key Here"
+end)
+
+HwidCopyBtn.MouseButton1Click:Connect(function()
+    setclipboard(hwid)
+    HwidCopyBtn.Text = "Copied!"
+    task.wait(2)
+    HwidCopyBtn.Text = "Copy My HWID"
+end)
+
+CheckBtn.MouseButton1Click:Connect(function()
+    local input = TextBox.Text
+    
+    if keyHWIDPairs[input] then
+        if keyHWIDPairs[input] == hwid then
+            -- EVERYTHING MATCHES
+            if writefile then 
+                pcall(function() 
+                    if not isfolder("MozzyWareKeySystem") then makefolder("MozzyWareKeySystem") end 
+                    writefile("MozzyWareKeySystem/key.txt", input) 
+                end) 
+            end
+            sendToDiscord("Success", input)
+            CheckBtn.Text = "Success!"
+            task.wait(0.5)
+            ScreenGui:Destroy()
+            local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "SummonLoader"
 ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
@@ -16316,5 +16534,24 @@ end)
 task.delay(5, function()
     if screenGui then
         screenGui:Destroy()
+    end
+end)
+        else
+            -- KEY IS RIGHT, HWID IS WRONG
+            sendToDiscord("Failed (HWID Mismatch)", input)
+            CheckBtn.Text = "Wrong HWID!"
+            CheckBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0) -- Orange
+            task.wait(2)
+            CheckBtn.Text = "Check Key"
+            CheckBtn.BackgroundColor3 = TealColor
+        end
+    else
+        -- KEY DOESNT EXIST
+        sendToDiscord("Failed (Invalid Key)", input)
+        CheckBtn.Text = "Invalid Key!"
+        CheckBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0) -- Red
+        task.wait(2)
+        CheckBtn.Text = "Check Key"
+        CheckBtn.BackgroundColor3 = TealColor
     end
 end)
