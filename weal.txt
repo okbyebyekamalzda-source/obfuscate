@@ -168,7 +168,7 @@ Instance.new("UICorner", CheckBtn)
 local CopyBtn = Instance.new("TextButton", MainFrame)
 CopyBtn.Size = UDim2.new(0, 145, 0, 35)
 CopyBtn.Position = UDim2.new(0.5, -150, 0.6, 5)
-CopyBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 47)
+CopyBtn.BackgroundColor3 = Color3.fromRGB(0, 122, 122)
 CopyBtn.Text = "Get Key Here"
 CopyBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
 Instance.new("UICorner", CopyBtn)
