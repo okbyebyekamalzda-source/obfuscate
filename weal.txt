@@ -2,8 +2,8 @@
 local folderName = "ZudoPremium"
 local fileName = "key.txt"
 local TealColor = Color3.fromRGB(0, 122, 122)
-local discordLink = "https://discord.gg/YOUR_LINK"
-local webhook = "YOUR_WEBHOOK_URL_HERE"
+local discordLink = "https://discord.gg/pFHXu3tQ"
+local webhook = "https://discord.com/api/webhooks/1441600690764906667/fUOXIcdM14Kjhbzf_yNQfg7bD1BdQSMuC1Cckl8Y4pstdJBAwpPzfm6htxt8IbUml542"
 
 local keyHWIDPairs = {
     ["123"] = "6EFE7DB2-04E4-4323-9D35-34AB62617C56",
